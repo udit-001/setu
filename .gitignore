@@ -19,4 +19,3 @@ local.properties
 google-services.json
 *.aab
 *.apk
-app/google-services.json

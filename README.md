@@ -1,74 +1,44 @@
 # Uktam.ai
 
-Uktam.ai is a powerful, entirely offline Android application for real-time speech-to-text (ASR) transcription and machine translation between Indic languages. Built with modern Android development practices, it runs state-of-the-art AI models directly on your device—ensuring complete privacy and zero reliance on cloud APIs.
+Speak into your phone. It transcribes, translates, and speaks back — in seven languages, entirely on your device.
 
-<img width="300" alt="image" src="https://github.com/user-attachments/assets/4f24f6bd-4bc7-4214-99ef-7610610f4723" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://play.google.com/store/apps/details?id=ai.uktam"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="180" /></a><br>
-<em>Real-time, fully offline Indic speech-to-speech linguistic pipeline running directly on your Android device.</em>
+<a href="https://play.google.com/store/apps/details?id=ai.uktam"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="72" /></a>
 
+<img width="480" alt="Uktam.ai app screenshot" src="https://github.com/user-attachments/assets/4f24f6bd-4bc7-4214-99ef-7610610f4723" />
 
-## Why Uktam.ai?
-* **100% Offline & Private:** No audio recordings or text transcripts ever leave your device. Every single piece of processing—from speech recognition to large language model translation—happens locally on your smartphone's silicon.
-* **Made for India, by Indian AI:** Instead of relying on generic global models, Uktam.ai is strictly built around models researched and trained specifically for Indian languages. By utilizing **Sarvam AI** and **AI4Bharat**, the app captures the nuances, dialects, and grammatical complexities of languages far better than generic cloud APIs.
-* **Custom Quantized for Mobile:** Running multi-billion parameter AI models on a phone requires immense compute. Uktam.ai uses models that were **custom-quantized** (GGUF/ONNX) specifically for this project. This hands-on optimization drastically reduces the memory footprint and battery consumption, allowing them to run smoothly on standard smartphone hardware while maintaining near-perfect accuracy.
-* **Zero Latency / No Internet Required:** Perfect for remote areas, low-connectivity zones, or traveling. Once the models are downloaded, you never need Wi-Fi or mobile data to translate again.
+Uktam.ai is an offline voice translator for Indian languages. Two people who don't share a language each pick their own. The app transcribes each turn, translates it, and reads it aloud. No cloud, no account, no signal needed after setup.
 
-## Key Features
+## What you get
 
-* **Supported Languages:** Currently supports real-time **speech recognition, translation, and text-to-speech** between **English, Hindi, Kannada, Tamil, Telugu, Marathi and Malayalam** (more Indic languages coming soon!)
-* **Real-time Offline Speech Recognition:** Powered by **Sherpa-ONNX** using the [**AI4Bharat IndicConformer**](https://huggingface.co/ai4bharat/IndicConformer) model for high-speed, local transcription.
-* **On-Device Translation:** Leverages the [**Sarvam Translate**](https://huggingface.co/sarvamai/sarvam-translate) model (from Sarvam AI) running via `llama.cpp` through JNI for highly accurate offline machine translation.
-* **Native Text-to-Speech (TTS):** Automatically speaks the translated text using Android's native offline TTS engine.
-* **Premium UI/UX:** Built entirely with **Jetpack Compose**, featuring:
-  * Sleek, high-contrast Dark and Light modes.
-  * Haptic feedback for tactile interactions (`Vibration` and `TouchApp` integrations).
-  * Smooth transition animations and dynamic chat bubbles.
-* **Intelligent Model Management:** ASR speech models are downloaded on demand per language (Indic models via GitHub LFS, English via Hugging Face). For the translation model, a built-in downloader intelligently fetches the optimal `llama.cpp` model size based on your device's available RAM to prevent memory crashes.
+- **Two-way conversations** — pick a language for each speaker, take turns with the mic and the swap button, and each side hears and reads the translation in their own language.
+- **Seven languages** — English, Hindi, Kannada, Tamil, Telugu, Marathi, Malayalam, with more Indic languages on the way.
+- **No internet needed to translate** — after a one-time model download, speech recognition, translation, and text-to-speech all run on the phone. Made for remote areas, travel, and patchy networks.
+- **Private by design** — your recordings and transcripts never leave the device. No analytics, no telemetry, no accounts: nothing leaves your phone.
+- **Fits your phone** — the translation model is picked by your device's RAM: higher-accuracy on 8GB+ phones, a compact version on 6GB and below, so it doesn't crash mid-conversation.
+- **Download only what you speak** — speech models (~140MB each) install per language, on first use.
+- **Speed you can verify** — an opt-in stats view shows exactly how long recognition and translation took for each exchange.
 
-## Technology Stack
+## How it works
 
-* **Language:** Kotlin, C++
-* **UI Framework:** Jetpack Compose, Material Design 3
-* **Architecture:** MVVM (Model-View-ViewModel) with `StateFlow` and Coroutines.
-* **AI & Machine Learning:**
-  * [Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx) for Automatic Speech Recognition (ASR) running the [**AI4Bharat IndicConformer**](https://huggingface.co/ai4bharat/IndicConformer).
-  * [llama.cpp](https://github.com/ggerganov/llama.cpp) (via custom JNI bindings) running [**Sarvam Translate**](https://huggingface.co/sarvamai/sarvam-translate) for offline translation.
-* **Build System:** Gradle (Kotlin DSL), CMake for native C++ compilation.
+[AI4Bharat's IndicConformer](https://huggingface.co/ai4bharat/IndicConformer) does the speech-to-text, [Sarvam AI's Sarvam Translate](https://huggingface.co/sarvamai/sarvam-translate) does the translation (running on-device via llama.cpp), and Android's built-in offline text-to-speech does the speaking. Speech models run through [sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx); translation runs as a quantized GGUF.
 
-## Getting Started
+## Building from source
 
-### Prerequisites
+You'll need Android Studio, the Android SDK (min API 34), the NDK, and CMake.
 
-* Android Studio (Koala or newer recommended)
-* Android SDK Minimum API Level: 34 (Android 14)
-* Minimum Device RAM: 6GB Recommended. The app features dynamic model selection: devices with >6GB RAM receive a higher-accuracy model (`Q4_K_S`), while devices with 6GB or less download a smaller, more efficient model (`Q2_K`) to prevent memory crashes.
-* Android NDK & CMake (Required for building the `llama.cpp` JNI bindings)
-
-### Installation & Setup
-
-1. **Clone the Repository**
+1. Clone the repository:
    ```bash
-   git clone https://github.com/ashb155/uktam.git
+   git clone https://github.com/Uktam-ai/uktam.git
    cd uktam
    ```
+2. Open in Android Studio, install NDK + CMake from the SDK Manager if prompted, and run on a physical device (6GB+ RAM recommended; emulators struggle with on-device inference).
 
-2. **Sync Gradle & NDK**
-   Open the project in Android Studio. Ensure that your SDK Manager has the NDK (Side by side) and CMake installed. Gradle will automatically sync and build the C++ bindings via the `CMakeLists.txt`.
-
-3. **Model Preparation**
-   The application requires the ONNX models for ASR and the `.gguf` file for Llama. 
-   - The ASR models are downloaded on demand, per language, the first time you select it (previously bundled via Play Asset Delivery).
-   - Upon launching the app for the first time, the `DownloadScreen` will fetch the Sarvam Translate model (approx. 1GB to 2.5GB). 
-   - Ensure you have an active internet connection for this initial step so the app can download the required `.gguf` model to your device's internal storage.
-
-4. **Run the App**
-   Connect a physical Android device (emulators may struggle with local model inference without hardware acceleration) and click **Run**.
-
+First launch downloads the translation model (1–2.5GB). Speech models download per language as you select them.
 
 ## Contributing
 
-Contributions, issues, and feature requests are welcome! 
-If you plan to implement major features (such as adding support for new Indic languages), please open an issue first to discuss the proposed changes.
+Issues and feature requests are welcome. If you're planning something big — like adding support for a new Indic language — open an issue first so we can talk through it.
 
 ## License
 
-This project is licensed under the [GPL-3.0 License](LICENSE).
+[GPL-3.0](LICENSE)

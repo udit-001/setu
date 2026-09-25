@@ -15,9 +15,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 import androidx.core.content.edit
-import com.google.firebase.analytics.analytics
-import com.google.firebase.analytics.logEvent
-import com.google.firebase.Firebase
 
 data class ConversationMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -194,11 +191,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                                         val startLoadTime = System.currentTimeMillis()
                                         llamaCtx = LlamaWrapper.loadModel(modelPath)
                                         val loadTime = System.currentTimeMillis() - startLoadTime
-                                        
-                                        Firebase.analytics.logEvent("model_load_completed") {
-                                            param("model_load_time_ms", loadTime)
-                                        }
-                                        
+                                                                                
                                         if (llamaCtx != 0L) _isModelReady.value = true
                                     }
                                 }
@@ -212,11 +205,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                     val startLoadTime = System.currentTimeMillis()
                     llamaCtx = LlamaWrapper.loadModel(modelPath)
                     val loadTime = System.currentTimeMillis() - startLoadTime
-                    
-                    Firebase.analytics.logEvent("model_load_completed") {
-                        param("model_load_time_ms", loadTime)
-                    }
-                    
+                                        
                     if (llamaCtx != 0L) {
                         _isModelReady.value = true
                     }
@@ -268,15 +257,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 val translated = translate(resultText, _srcLang.value, targetLangCode)
                 val transTime = System.currentTimeMillis() - transStart
                 android.util.Log.d("LlamaTest", "Translation: '$translated'")
-                
-                Firebase.analytics.logEvent("translation_completed") {
-                    param("asr_duration_ms", asrTime)
-                    param("translation_duration_ms", transTime)
-                    param("source_language", _srcLang.value)
-                    param("target_language", targetLangCode)
-                    param("input_char_count", resultText.length.toLong())
-                }
-                
+                                
                 withContext(Dispatchers.Main) {
                     _isTranslating.value = false
                     _transcription.value = ""
@@ -401,11 +382,5 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         tts?.shutdown()
     }
     
-    fun submitFeedback(isPositive: Boolean) {
-        Firebase.analytics.logEvent("translation_feedback") {
-            param("score", if (isPositive) 1 else -1)
-            param("source_language", _srcLang.value)
-            param("target_language", targetLang)
-        }
-    }
+    fun submitFeedback(isPositive: Boolean) {    }
 }
