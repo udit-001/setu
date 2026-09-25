@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # One grouped PR per week for all action bumps
+    groups:
+      github-actions:
+        patterns:
+          - "*"

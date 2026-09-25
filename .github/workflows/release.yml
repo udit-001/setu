@@ -23,6 +23,21 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          cache: gradle
+
+      - name: Cache Android SDK packages
+        uses: actions/cache@v4
+        with:
+          # NDK + CMake + platform/build-tools are auto-installed by Gradle/AGP
+          # (licenses accepted below). Cache them so each release build does not
+          # re-download ~2GB of SDK. Key on build config so version bumps bust it.
+          path: |
+            ${{ env.ANDROID_HOME }}/ndk
+            ${{ env.ANDROID_HOME }}/cmake
+            ${{ env.ANDROID_HOME }}/platforms
+            ${{ env.ANDROID_HOME }}/build-tools
+          key: android-sdk-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml', 'app/build.gradle.kts') }}
+          restore-keys: android-sdk-${{ runner.os }}-
 
       - name: Accept Android SDK licenses
         run: |
