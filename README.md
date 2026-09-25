@@ -22,7 +22,7 @@ Setu is an offline voice translator for Indian languages. Two people who don't s
 
 ## Building from source
 
-You'll need Android Studio, the Android SDK (min API 34), the NDK, and CMake.
+You'll need Android Studio, the Android SDK (min API 31), the NDK, and CMake.
 
 1. Clone this repository and open it in Android Studio.
 2. Open in Android Studio, install NDK + CMake from the SDK Manager if prompted, and run on a physical device (6GB+ RAM recommended; emulators struggle with on-device inference).
