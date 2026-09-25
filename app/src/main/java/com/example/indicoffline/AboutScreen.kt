@@ -165,7 +165,7 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .clickable { uriHandler.openUri("https://github.com/Uktam-ai/setu") }
+                    .clickable { uriHandler.openUri("https://github.com/udit-001/setu") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -191,7 +191,7 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .clickable { uriHandler.openUri("https://github.com/Uktam-ai/setu/blob/main/PRIVACY.md") }
+                    .clickable { uriHandler.openUri("https://github.com/udit-001/setu/blob/main/PRIVACY.md") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
