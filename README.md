@@ -14,7 +14,7 @@ Uktam.ai is a powerful, entirely offline Android application for real-time speec
 
 ## Key Features
 
-* **Supported Languages:** Currently supports real-time **speech recognition, translation, and text-to-speech** between **Hindi, Kannada, Tamil, Telugu, Marathi and Malayalam** (more Indic languages coming soon!)
+* **Supported Languages:** Currently supports real-time **speech recognition, translation, and text-to-speech** between **English, Hindi, Kannada, Tamil, Telugu, Marathi and Malayalam** (more Indic languages coming soon!)
 * **Real-time Offline Speech Recognition:** Powered by **Sherpa-ONNX** using the [**AI4Bharat IndicConformer**](https://huggingface.co/ai4bharat/IndicConformer) model for high-speed, local transcription.
 * **On-Device Translation:** Leverages the [**Sarvam Translate**](https://huggingface.co/sarvamai/sarvam-translate) model (from Sarvam AI) running via `llama.cpp` through JNI for highly accurate offline machine translation.
 * **Native Text-to-Speech (TTS):** Automatically speaks the translated text using Android's native offline TTS engine.
@@ -22,7 +22,7 @@ Uktam.ai is a powerful, entirely offline Android application for real-time speec
   * Sleek, high-contrast Dark and Light modes.
   * Haptic feedback for tactile interactions (`Vibration` and `TouchApp` integrations).
   * Smooth transition animations and dynamic chat bubbles.
-* **Intelligent Model Management:** ASR models are bundled seamlessly via Play Asset Delivery. For the translation model, a built-in downloader intelligently fetches the optimal `llama.cpp` model size based on your device's available RAM to prevent memory crashes.
+* **Intelligent Model Management:** ASR speech models are downloaded on demand per language (Indic models via GitHub LFS, English via Hugging Face). For the translation model, a built-in downloader intelligently fetches the optimal `llama.cpp` model size based on your device's available RAM to prevent memory crashes.
 
 ## Technology Stack
 
@@ -56,7 +56,7 @@ Uktam.ai is a powerful, entirely offline Android application for real-time speec
 
 3. **Model Preparation**
    The application requires the ONNX models for ASR and the `.gguf` file for Llama. 
-   - The ASR models are bundled via Play Asset Delivery (`:asr_assets`) and are installed automatically.
+   - The ASR models are downloaded on demand, per language, the first time you select it (previously bundled via Play Asset Delivery).
    - Upon launching the app for the first time, the `DownloadScreen` will fetch the Sarvam Translate model (approx. 1GB to 2.5GB). 
    - Ensure you have an active internet connection for this initial step so the app can download the required `.gguf` model to your device's internal storage.
 

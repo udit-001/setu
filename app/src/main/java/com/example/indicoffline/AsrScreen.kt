@@ -78,6 +78,12 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.core.content.ContextCompat
 
+private fun asrStatusSuffix(status: AsrModelStatus?): String = when (status) {
+    is AsrModelStatus.Downloading -> " · ${status.progressPercent}%"
+    AsrModelStatus.NotInstalled -> " · tap to download"
+    else -> ""
+}
+
 @Composable
 fun AsrScreen(
     viewModel: TranslationViewModel,
@@ -99,6 +105,7 @@ fun AsrScreen(
     val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
     val isTranslating by viewModel.isTranslating.collectAsStateWithLifecycle()
     val showNerdStats by viewModel.showNerdStats.collectAsStateWithLifecycle()
+    val asrModelStatus by viewModel.asrModelStatus.collectAsStateWithLifecycle()
     
     val listState = rememberLazyListState()
 
@@ -182,7 +189,7 @@ fun AsrScreen(
                         }
                     }
                 }
-                val availableLanguages = listOf("hi", "kn", "ta", "te", "mr", "ml")
+                val availableLanguages = viewModel.availableLanguages
                 var primaryExpanded by remember { mutableStateOf(false) }
                 var secondaryExpanded by remember { mutableStateOf(false) }
                 var primaryBoxWidth by remember { mutableStateOf(0) }
@@ -212,7 +219,7 @@ fun AsrScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
                             ) {
                                 Text(
-                                    text = viewModel.getLanguageName(primaryLang),
+                                    text = viewModel.getLanguageNameEnglish(primaryLang) + asrStatusSuffix(asrModelStatus[primaryLang]),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = if (isPrimaryActive) FontWeight.Bold else FontWeight.Medium
                                     ),
@@ -249,7 +256,7 @@ fun AsrScreen(
                                                 .padding(vertical = 12.dp)
                                         ) {
                                             Text(
-                                                text = viewModel.getLanguageName(primaryLang),
+                                                text = viewModel.getLanguageNameEnglish(primaryLang),
                                                 style = MaterialTheme.typography.titleMedium.copy(
                                                     fontWeight = if (isPrimaryActive) FontWeight.Bold else FontWeight.Medium
                                                 ),
@@ -278,7 +285,7 @@ fun AsrScreen(
                                                     horizontalArrangement = Arrangement.Center
                                                 ) {
                                                     Text(
-                                                        text = viewModel.getLanguageName(lang),
+                                                        text = viewModel.getLanguageNameEnglish(lang) + asrStatusSuffix(asrModelStatus[lang]),
                                                         color = if (isSelected) primaryText else if (isDisabled) primaryText.copy(alpha = 0.2f) else primaryText.copy(alpha = 0.6f),
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                                     ) 
@@ -321,7 +328,7 @@ fun AsrScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
                             ) {
                                 Text(
-                                    text = viewModel.getLanguageName(secondaryLang),
+                                    text = viewModel.getLanguageNameEnglish(secondaryLang) + asrStatusSuffix(asrModelStatus[secondaryLang]),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = if (isSecondaryActive) FontWeight.Bold else FontWeight.Medium
                                     ),
@@ -358,7 +365,7 @@ fun AsrScreen(
                                                 .padding(vertical = 12.dp)
                                         ) {
                                             Text(
-                                                text = viewModel.getLanguageName(secondaryLang),
+                                                text = viewModel.getLanguageNameEnglish(secondaryLang),
                                                 style = MaterialTheme.typography.titleMedium.copy(
                                                     fontWeight = if (isSecondaryActive) FontWeight.Bold else FontWeight.Medium
                                                 ),
@@ -387,7 +394,7 @@ fun AsrScreen(
                                                     horizontalArrangement = Arrangement.Center
                                                 ) {
                                                     Text(
-                                                        text = viewModel.getLanguageName(lang),
+                                                        text = viewModel.getLanguageNameEnglish(lang) + asrStatusSuffix(asrModelStatus[lang]),
                                                         color = if (isSelected) secondaryText else if (isDisabled) secondaryText.copy(alpha = 0.2f) else secondaryText.copy(alpha = 0.6f),
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                                     ) 
@@ -581,7 +588,8 @@ fun AsrScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val isButtonEnabled = isModelReady && !isTranslating
+                val isAsrLanguageReady = asrModelStatus[srcLang] == AsrModelStatus.Ready
+                val isButtonEnabled = isModelReady && !isTranslating && isAsrLanguageReady
                 
                 FloatingActionButton(
                     onClick = {
@@ -626,11 +634,14 @@ fun AsrScreen(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+                val showStatusHint = !isModelReady || !isAsrLanguageReady
                 Text(
-                    text = "Initializing AI Engine...",
+                    text = if (!isModelReady) "Initializing AI Engine..."
+                           else if (!isAsrLanguageReady) "Preparing ${viewModel.getLanguageNameEnglish(srcLang)} speech model..."
+                           else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    modifier = Modifier.alpha(if (isModelReady) 0f else 1f)
+                    modifier = Modifier.alpha(if (showStatusHint) 1f else 0f)
                 )
             }
         }

@@ -10,12 +10,6 @@ android {
     namespace = "com.example.indicoffline"
     compileSdk = 37
 
-    androidResources {
-        noCompress.add("onnx")
-    }
-    
-    assetPacks += listOf(":asr_assets")
-
     defaultConfig {
         applicationId = "ai.uktam"
         minSdk = 34
@@ -65,6 +59,12 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
     }
 }
 

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Locale
 import androidx.core.content.edit
 import com.google.firebase.analytics.analytics
@@ -33,7 +34,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private val prefs: SharedPreferences = application.getSharedPreferences("indic_offline_prefs", Context.MODE_PRIVATE)
 
-    private val asrEngine = IndicAsrEngine(application.assets)
+    private val asrModels = AsrModelRepository(
+        modelsDir = File(application.filesDir, "asr_models"),
+        fetcher = ModelFetcher
+    )
+    private val asrEngine = IndicAsrEngine(asrModels)
     private var llamaCtx: Long = 0L
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -84,6 +89,9 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _srcLang = MutableStateFlow("hi")
     val srcLang: StateFlow<String> = _srcLang.asStateFlow()
+
+    val availableLanguages: List<String> = listOf("hi", "kn", "ta", "te", "mr", "ml", "en")
+    val asrModelStatus: StateFlow<Map<String, AsrModelStatus>> = asrModels.status
     
     private val _conversationHistory = MutableStateFlow<List<ConversationMessage>>(emptyList())
     val conversationHistory: StateFlow<List<ConversationMessage>> = _conversationHistory.asStateFlow()
@@ -133,6 +141,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             "te" -> "తెలుగు"
             "mr" -> "मराठी"
             "ml" -> "മലയാളം"
+            "en" -> "English"
             else -> "Unknown"
         }
     }
@@ -145,6 +154,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             "te" -> "Telugu"
             "mr" -> "Marathi"
             "ml" -> "Malayalam"
+            "en" -> "English"
             else -> "Unknown"
         }
     }
@@ -225,6 +235,10 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun startRecording(audioCapturer: AudioCapturer) {
+        if (!asrModels.isReady(_srcLang.value)) {
+            android.util.Log.w("TranslationViewModel", "Recording blocked: ASR model for '${_srcLang.value}' not ready")
+            return
+        }
         audioCapturer.startRecording()
         _isRecording.value = true
         _transcription.value = "Listening..."
@@ -297,6 +311,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private fun speak(text: String, targetLangCode: String, onTtsMissing: (String) -> Unit) {
         if (!isTtsReady || tts == null) return
         val locale = when (targetLangCode) {
+            "en" -> Locale.Builder().setLanguage("en").setRegion("US").build()
             "hi" -> Locale.Builder().setLanguage("hi").setRegion("IN").build()
             "kn" -> Locale.Builder().setLanguage("kn").setRegion("IN").build()
             "ta" -> Locale.Builder().setLanguage("ta").setRegion("IN").build()
@@ -328,12 +343,22 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private suspend fun translate(text: String, srcLang: String, targetLang: String): String {
         if (llamaCtx == 0L) return "Translation model not loaded"
         return withContext(Dispatchers.IO) {
-            val toEnglishPrompt = "<bos><start_of_turn>user\nTranslate the text below to English.\n\n$text<end_of_turn>\n<start_of_turn>model\n"
-            val englishBridge = LlamaWrapper.completion(llamaCtx, toEnglishPrompt).trim()
-            android.util.Log.d("LlamaTest", "English bridge: '$englishBridge'")
+            if (srcLang == "en" && targetLang == "en") return@withContext text
+
+            // The open-sourced Sarvam-Translate checkpoint only supports
+            // English <-> Indic directions, so Indic -> Indic must pivot via
+            // English. When either side is already English, a single pass suffices.
+            val sourceText = if (srcLang != "en" && targetLang != "en") {
+                val toEnglishPrompt = "<bos><start_of_turn>user\nTranslate the text below to English.\n\n$text<end_of_turn>\n<start_of_turn>model\n"
+                val englishBridge = LlamaWrapper.completion(llamaCtx, toEnglishPrompt).trim()
+                android.util.Log.d("LlamaTest", "English bridge: '$englishBridge'")
+                englishBridge
+            } else {
+                text
+            }
 
             val targetLangName = getLanguageName(targetLang)
-            val toTargetPrompt = "<bos><start_of_turn>user\nTranslate the text below to $targetLangName.\n\n$englishBridge<end_of_turn>\n<start_of_turn>model\n"
+            val toTargetPrompt = "<bos><start_of_turn>user\nTranslate the text below to $targetLangName.\n\n$sourceText<end_of_turn>\n<start_of_turn>model\n"
             
             _streamingTranslation.value = ""
             val tokenChannel = kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.UNLIMITED)
@@ -363,7 +388,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             val finalTranslation = sb.toString().trim()
             _streamingTranslation.value = finalTranslation
             
-            android.util.Log.d("LlamaTest", "Translation ($srcLang -> English -> $targetLang): '$finalTranslation'")
+            android.util.Log.d("LlamaTest", "Translation ($srcLang -> $targetLang): '$finalTranslation'")
             finalTranslation
         }
     }
