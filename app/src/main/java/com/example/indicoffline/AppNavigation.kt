@@ -31,7 +31,7 @@ fun AppNavigation(
     val systemDarkTheme = isSystemInDarkTheme()
     val isDarkMode = isDarkModePref ?: systemDarkTheme
 
-    IndicofflineTheme(darkTheme = isDarkMode) {
+    IndicofflineTheme(darkTheme = isDarkMode, dynamicColor = true) {
         Surface(modifier = Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
