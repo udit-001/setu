@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.withLock
 sealed interface AsrModelStatus {
     data object NotInstalled : AsrModelStatus
     data class Downloading(val progressPercent: Int) : AsrModelStatus
+    data object Failed : AsrModelStatus
     data object Ready : AsrModelStatus
 }
 
@@ -67,7 +68,7 @@ class AsrModelRepository(
                 })
                 if (!ok) {
                     android.util.Log.e("AsrModelRepository", "Failed to download ASR model for '$lang'")
-                    setStatus(lang, AsrModelStatus.NotInstalled)
+                    setStatus(lang, AsrModelStatus.Failed)
                     return null
                 }
             }
@@ -77,7 +78,7 @@ class AsrModelRepository(
                 val ok = fetcher.download(dest = tokensFile, urls = urls.tokens, onProgress = {})
                 if (!ok) {
                     android.util.Log.e("AsrModelRepository", "Failed to download tokens for '$lang'")
-                    setStatus(lang, AsrModelStatus.NotInstalled)
+                    setStatus(lang, AsrModelStatus.Failed)
                     return null
                 }
             }

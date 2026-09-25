@@ -50,6 +50,19 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _isModelDownloaded = MutableStateFlow(ModelDownloader.isModelDownloaded(application))
     val isModelDownloaded: StateFlow<Boolean> = _isModelDownloaded.asStateFlow()
 
+    private val _downloadFailed = MutableStateFlow(false)
+    val downloadFailed: StateFlow<Boolean> = _downloadFailed.asStateFlow()
+
+    private val _downloadWaitingForNetwork = MutableStateFlow(false)
+    val downloadWaitingForNetwork: StateFlow<Boolean> = _downloadWaitingForNetwork.asStateFlow()
+
+    fun retryModelDownload() {
+        _downloadFailed.value = false
+        _downloadWaitingForNetwork.value = false
+        _downloadProgress.value = 0
+        ModelDownloader.enqueueDownload(getApplication())
+    }
+
     private val _isDarkMode = MutableStateFlow(
         if (prefs.contains("is_dark_mode")) prefs.getBoolean("is_dark_mode", false) else null
     )
@@ -177,25 +190,42 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                     androidx.work.WorkManager.getInstance(appCtx)
                         .getWorkInfosByTagFlow("model_download")
                         .collect { workInfoList ->
-                            val workInfo = workInfoList.firstOrNull { !it.state.isFinished || it.state == androidx.work.WorkInfo.State.SUCCEEDED }
-                            if (workInfo != null) {
-                                val progress = workInfo.progress.getInt("PROGRESS", _downloadProgress.value)
-                                if (progress > _downloadProgress.value) {
-                                    _downloadProgress.value = progress
-                                }
-                                
-                                if (workInfo.state == androidx.work.WorkInfo.State.SUCCEEDED && !_isModelReady.value) {
-                                    _isModelDownloaded.value = true
-                                    _downloadProgress.value = 100
-                                    val modelPath = ModelDownloader.getModelFile(appCtx).absolutePath
-                                    if (llamaCtx == 0L) {
-                                        val startLoadTime = System.currentTimeMillis()
-                                        llamaCtx = LlamaWrapper.loadModel(modelPath)
-                                        val loadTime = System.currentTimeMillis() - startLoadTime
-                                                                                
-                                        if (llamaCtx != 0L) _isModelReady.value = true
+                            // Only the translation-model work (the ASR fetcher
+                            // shares the "model_download" tag).
+                            val workInfo = workInfoList.firstOrNull { it.tags.contains("translation_model") }
+                                ?: return@collect
+                            when (workInfo.state) {
+                                androidx.work.WorkInfo.State.ENQUEUED ->
+                                    _downloadWaitingForNetwork.value = true
+                                androidx.work.WorkInfo.State.RUNNING -> {
+                                    _downloadWaitingForNetwork.value = false
+                                    val progress = workInfo.progress.getInt("PROGRESS", _downloadProgress.value)
+                                    if (progress > _downloadProgress.value) {
+                                        _downloadProgress.value = progress
                                     }
                                 }
+                                androidx.work.WorkInfo.State.SUCCEEDED -> {
+                                    _downloadWaitingForNetwork.value = false
+                                    if (!_isModelReady.value) {
+                                        _isModelDownloaded.value = true
+                                        _downloadProgress.value = 100
+                                        val modelPath = ModelDownloader.getModelFile(appCtx).absolutePath
+                                        if (llamaCtx == 0L) {
+                                            val startLoadTime = System.currentTimeMillis()
+                                            llamaCtx = LlamaWrapper.loadModel(modelPath)
+                                            val loadTime = System.currentTimeMillis() - startLoadTime
+                                            android.util.Log.d("LlamaTest", "Model load took ${loadTime}ms")
+                                                                                    
+                                            if (llamaCtx != 0L) _isModelReady.value = true
+                                        }
+                                    }
+                                }
+                                androidx.work.WorkInfo.State.FAILED,
+                                androidx.work.WorkInfo.State.CANCELLED -> {
+                                    _downloadWaitingForNetwork.value = false
+                                    _downloadFailed.value = true
+                                }
+                                else -> {}
                             }
                         }
                 }

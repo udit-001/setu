@@ -81,6 +81,7 @@ import androidx.core.content.ContextCompat
 private fun asrStatusSuffix(status: AsrModelStatus?): String = when (status) {
     is AsrModelStatus.Downloading -> " · ${status.progressPercent}%"
     AsrModelStatus.NotInstalled -> " · tap to download"
+    AsrModelStatus.Failed -> " · download failed, tap to retry"
     else -> ""
 }
 
@@ -628,11 +629,18 @@ fun AsrScreen(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+                val srcStatus = asrModelStatus[srcLang]
                 val showStatusHint = !isModelReady || !isAsrLanguageReady
                 Text(
-                    text = if (!isModelReady) "Starting the translator... this can take a minute"
-                           else if (!isAsrLanguageReady) "Preparing ${viewModel.getLanguageNameEnglish(srcLang)} speech model..."
-                           else "",
+                    text = when {
+                        !isModelReady -> "Starting the translator... this can take a minute"
+                        srcStatus is AsrModelStatus.Failed ->
+                            "Couldn't download the ${viewModel.getLanguageNameEnglish(srcLang)} speech model. Select the language above to retry."
+                        srcStatus is AsrModelStatus.Downloading ->
+                            "Downloading ${viewModel.getLanguageNameEnglish(srcLang)} speech model... ${srcStatus.progressPercent}%"
+                        !isAsrLanguageReady -> "Preparing ${viewModel.getLanguageNameEnglish(srcLang)} speech model..."
+                        else -> ""
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier.alpha(if (showStatusHint) 1f else 0f)

@@ -72,6 +72,7 @@ object ModelDownloader {
             .setInputData(inputData)
             .setConstraints(constraints)
             .addTag("model_download")
+            .addTag("translation_model")
             .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
 

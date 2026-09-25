@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -75,26 +76,48 @@ fun DownloadScreen(viewModel: TranslationViewModel) {
                 )
             )
             
+            val failed by viewModel.downloadFailed.collectAsStateWithLifecycle()
+            val waitingForNetwork by viewModel.downloadWaitingForNetwork.collectAsStateWithLifecycle()
+
             Spacer(modifier = Modifier.height(20.dp))
             
             Text(
-                text = if (progress < 100) "Downloading the translation model" else "Finalizing...",
+                text = when {
+                    failed -> "Download failed"
+                    waitingForNetwork -> "Waiting for a network connection..."
+                    progress < 100 -> "Downloading the translation model"
+                    else -> "Finalizing..."
+                },
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            Text(
-                text = "One-time download (1–2.5GB). Wi-Fi recommended.",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                ),
-                textAlign = TextAlign.Center
-            )
+            if (failed) {
+                Text(
+                    text = "Make sure Wi-Fi or mobile data is on, then try again.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = viewModel::retryModelDownload) {
+                    Text("Retry download")
+                }
+            } else {
+                Text(
+                    text = "One-time download (1–2.5GB). Wi-Fi recommended.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
