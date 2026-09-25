@@ -22,8 +22,12 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: |
+          # The runner ships an Android SDK at $ANDROID_HOME; accept all
+          # licenses so Gradle/AGP can auto-install missing packages (NDK,
+          # CMake, platform 37).
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
 
       - name: Prepare release signing key
         env:
