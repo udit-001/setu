@@ -38,10 +38,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -102,6 +104,7 @@ fun AsrScreen(
     val secondaryLang by viewModel.secondaryLang.collectAsStateWithLifecycle()
     val transcription by viewModel.transcription.collectAsStateWithLifecycle()
     val streamingTranslation by viewModel.streamingTranslation.collectAsStateWithLifecycle()
+    val translationFailure by viewModel.translationFailure.collectAsStateWithLifecycle()
     val conversationHistory by viewModel.conversationHistory.collectAsStateWithLifecycle()
     val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
     val isTranslating by viewModel.isTranslating.collectAsStateWithLifecycle()
@@ -110,8 +113,12 @@ fun AsrScreen(
     
     val listState = rememberLazyListState()
 
-    LaunchedEffect(conversationHistory.size, isRecording, isTranslating) {
-        val targetIndex = if (isRecording || isTranslating) conversationHistory.size else conversationHistory.size - 1
+    LaunchedEffect(conversationHistory.size, isRecording, isTranslating, translationFailure) {
+        val targetIndex = when {
+            isRecording || isTranslating -> conversationHistory.size
+            translationFailure != null -> conversationHistory.size + 1
+            else -> conversationHistory.size - 1
+        }
         if (targetIndex >= 0) {
             listState.animateScrollToItem(targetIndex)
         }
@@ -544,10 +551,66 @@ fun AsrScreen(
                     }
                 }
             }
+
+            translationFailure?.let { failure ->
+                item {
+                    val isPrimarySpeaker = failure.speakerLang == primaryLang
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = if (isPrimarySpeaker) Arrangement.Start else Arrangement.End
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(0.85f)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = failure.originalText,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Translation failed. Try again.",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                        onClick = { viewModel.retryFailedTranslation(onTtsMissing) },
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Refresh,
+                                            contentDescription = "Retry translation",
+                                            tint = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { viewModel.dismissTranslationFailure() },
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Close,
+                                            contentDescription = "Dismiss",
+                                            tint = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             }
             
             androidx.compose.animation.AnimatedVisibility(
-                visible = conversationHistory.isEmpty() && !isRecording && !isTranslating,
+                visible = conversationHistory.isEmpty() && !isRecording && !isTranslating && translationFailure == null,
                 enter = fadeIn(tween(300)),
                 exit = fadeOut(tween(300)),
                 modifier = Modifier.align(Alignment.Center).padding(bottom = 160.dp, start = 32.dp, end = 32.dp)

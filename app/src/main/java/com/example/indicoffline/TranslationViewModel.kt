@@ -119,6 +119,20 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     private val _streamingTranslation = MutableStateFlow("")
     val streamingTranslation: StateFlow<String> = _streamingTranslation.asStateFlow()
 
+    data class TranslationFailure(
+        val originalText: String,
+        val speakerLang: String,
+        val targetLang: String,
+        val transcriptionTimeMs: Long
+    )
+
+    private val _translationFailure = MutableStateFlow<TranslationFailure?>(null)
+    val translationFailure: StateFlow<TranslationFailure?> = _translationFailure.asStateFlow()
+
+    fun dismissTranslationFailure() {
+        _translationFailure.value = null
+    }
+
     private val _primaryLang = MutableStateFlow("hi")
     val primaryLang: StateFlow<String> = _primaryLang.asStateFlow()
 
@@ -249,6 +263,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _srcLang.value = lang
         _transcription.value = ""
         _streamingTranslation.value = ""
+        _translationFailure.value = null
         viewModelScope.launch(Dispatchers.IO) {
             asrEngine.loadLanguage(lang)
         }
@@ -263,6 +278,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         _isRecording.value = true
         _transcription.value = "Listening..."
         _streamingTranslation.value = ""
+        _translationFailure.value = null
     }
 
     fun stopRecordingAndProcess(audioCapturer: AudioCapturer, onTtsMissing: (String) -> Unit) {
@@ -292,19 +308,31 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 withContext(Dispatchers.Main) {
                     _isTranslating.value = false
                     _transcription.value = ""
-                    
-                    val newMessage = ConversationMessage(
-                        originalText = resultText,
-                        translatedText = translated,
-                        speakerLang = _srcLang.value,
-                        targetLang = targetLangCode,
-                        isPrimaryUser = _srcLang.value == _primaryLang.value,
-                        transcriptionTimeMs = asrTime,
-                        translationTimeMs = transTime
-                    )
-                    _conversationHistory.value += newMessage
-                    
-                    speak(translated, targetLangCode, onTtsMissing)
+
+                    if (translated == null) {
+                        // Failed translation: surface as a retryable error
+                        // card, never as conversation content.
+                        _streamingTranslation.value = ""
+                        _translationFailure.value = TranslationFailure(
+                            originalText = resultText,
+                            speakerLang = _srcLang.value,
+                            targetLang = targetLangCode,
+                            transcriptionTimeMs = asrTime
+                        )
+                    } else {
+                        val newMessage = ConversationMessage(
+                            originalText = resultText,
+                            translatedText = translated,
+                            speakerLang = _srcLang.value,
+                            targetLang = targetLangCode,
+                            isPrimaryUser = _srcLang.value == _primaryLang.value,
+                            transcriptionTimeMs = asrTime,
+                            translationTimeMs = transTime
+                        )
+                        _conversationHistory.value += newMessage
+
+                        speak(translated, targetLangCode, onTtsMissing)
+                    }
                 }
             } else {
                 kotlinx.coroutines.delay(1500)
@@ -318,6 +346,39 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     fun speakTranslation(text: String, targetLangCode: String, onTtsMissing: (String) -> Unit) {
         speak(text, targetLangCode, onTtsMissing)
+    }
+
+    fun retryFailedTranslation(onTtsMissing: (String) -> Unit) {
+        val failure = _translationFailure.value ?: return
+        _translationFailure.value = null
+        _isTranslating.value = true
+        _transcription.value = failure.originalText
+        _streamingTranslation.value = ""
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val transStart = System.currentTimeMillis()
+            val translated = translate(failure.originalText, failure.speakerLang, failure.targetLang)
+            val transTime = System.currentTimeMillis() - transStart
+
+            withContext(Dispatchers.Main) {
+                _isTranslating.value = false
+                _transcription.value = ""
+                if (translated == null) {
+                    _translationFailure.value = failure
+                } else {
+                    _conversationHistory.value += ConversationMessage(
+                        originalText = failure.originalText,
+                        translatedText = translated,
+                        speakerLang = failure.speakerLang,
+                        targetLang = failure.targetLang,
+                        isPrimaryUser = failure.speakerLang == _primaryLang.value,
+                        transcriptionTimeMs = failure.transcriptionTimeMs,
+                        translationTimeMs = transTime
+                    )
+                    speak(translated, failure.targetLang, onTtsMissing)
+                }
+            }
+        }
     }
 
     private fun speak(text: String, targetLangCode: String, onTtsMissing: (String) -> Unit) {
@@ -373,8 +434,9 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    private suspend fun translate(text: String, srcLang: String, targetLang: String): String {
-        if (llamaCtx == 0L) return "Translation model not loaded"
+    /** Returns the translation, or null on failure (model not loaded, engine error, empty output). */
+    private suspend fun translate(text: String, srcLang: String, targetLang: String): String? {
+        if (llamaCtx == 0L) return null
         return withContext(Dispatchers.IO) {
             if (srcLang == "en" && targetLang == "en") return@withContext text
 
@@ -385,6 +447,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                 val toEnglishPrompt = "<bos><start_of_turn>user\nTranslate the text below to English.\n\n$text<end_of_turn>\n<start_of_turn>model\n"
                 val englishBridge = LlamaWrapper.completion(llamaCtx, toEnglishPrompt).trim()
                 android.util.Log.d("LlamaTest", "English bridge: '$englishBridge'")
+                if (englishBridge.isEmpty() || englishBridge.startsWith("ERROR")) return@withContext null
                 englishBridge
             } else {
                 text
@@ -408,8 +471,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             }
 
             val sb = java.lang.StringBuilder()
+            var streamFailed = false
             LlamaWrapper.generateStream(llamaCtx, toTargetPrompt).collect { token ->
-                if (!token.startsWith("ERROR")) {
+                if (token.startsWith("ERROR")) {
+                    streamFailed = true
+                } else {
                     sb.append(token)
                     tokenChannel.trySend(token)
                 }
@@ -422,7 +488,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             _streamingTranslation.value = finalTranslation
             
             android.util.Log.d("LlamaTest", "Translation ($srcLang -> $targetLang): '$finalTranslation'")
-            finalTranslation
+            if (streamFailed || finalTranslation.isEmpty()) null else finalTranslation
         }
     }
 
