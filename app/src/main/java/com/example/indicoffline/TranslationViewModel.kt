@@ -36,7 +36,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private val asrModels = AsrModelRepository(
         modelsDir = File(application.filesDir, "asr_models"),
-        fetcher = ModelFetcher
+        fetcher = WorkManagerModelFetcher(application)
     )
     private val asrEngine = IndicAsrEngine(asrModels)
     private var llamaCtx: Long = 0L

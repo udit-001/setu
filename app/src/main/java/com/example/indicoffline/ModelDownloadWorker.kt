@@ -30,7 +30,8 @@ class ModelDownloadWorker(
 
         setForeground(createForegroundInfo(0))
 
-        val dest = File(applicationContext.filesDir, modelFilename)
+        val dest = inputData.getString("DEST")?.let { File(it) }
+            ?: File(applicationContext.filesDir, modelFilename)
         val success = ModelFetcher.download(
             dest = dest,
             urls = modelUrls.toList(),
@@ -61,9 +62,11 @@ class ModelDownloadWorker(
             .build()
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            // Use this worker's id as the notification id so concurrent
+            // workers (e.g. ASR model + tokens) don't collide.
+            ForegroundInfo(id.hashCode(), notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            ForegroundInfo(1, notification)
+            ForegroundInfo(id.hashCode(), notification)
         }
     }
 
