@@ -152,14 +152,6 @@ fun AboutScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_linkedin),
-                                contentDescription = "LinkedIn",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable { uriHandler.openUri("https://www.linkedin.com/in/ashutosh-bhat-365206328/") }
-                            )
-                            Icon(
                                 painter = painterResource(id = R.drawable.ic_github),
                                 contentDescription = "GitHub",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
