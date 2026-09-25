@@ -456,7 +456,7 @@ fun AsrScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                        contentDescription = "Speak",
+                        contentDescription = "Play again",
                                         tint = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -466,7 +466,7 @@ fun AsrScreen(
                             if (showNerdStats) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "ASR: ${message.transcriptionTimeMs}ms | Translation ${message.translationTimeMs / 1000.0}s",
+                                    text = "Speech ${message.transcriptionTimeMs / 1000.0}s · Translation ${message.translationTimeMs / 1000.0}s",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = (if (isPrimary) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer).copy(alpha = 0.5f)
                                 )
@@ -556,27 +556,21 @@ fun AsrScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) { 
                     Text(
-                        text = "Tap the languages at the top to choose your preferred languages",
+                        text = "Pick your languages above, then tap the mic and speak",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Press the mic icon and speak in your preferred language",
+                        text = "Setu translates and reads it aloud. Tap swap to switch turns.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Translation and speech in required language will appear automatically",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Press the swap icon to switch turns",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        text = "First use of a language downloads its speech model (~140MB)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -628,7 +622,7 @@ fun AsrScreen(
                 ) {
                     Icon(
                         imageVector = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic,
-                        contentDescription = if (isRecording) "Stop" else "Record",
+                        contentDescription = if (isRecording) "Stop recording" else "Start recording",
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -636,7 +630,7 @@ fun AsrScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 val showStatusHint = !isModelReady || !isAsrLanguageReady
                 Text(
-                    text = if (!isModelReady) "Initializing AI Engine..."
+                    text = if (!isModelReady) "Starting the translator... this can take a minute"
                            else if (!isAsrLanguageReady) "Preparing ${viewModel.getLanguageNameEnglish(srcLang)} speech model..."
                            else "",
                     style = MaterialTheme.typography.bodyMedium,

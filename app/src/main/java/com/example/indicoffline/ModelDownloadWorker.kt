@@ -45,7 +45,7 @@ class ModelDownloadWorker(
     }
 
     private fun createForegroundInfo(progress: Int): ForegroundInfo {
-        val title = "Setting up your offline experience"
+        val title = "Downloading translation model"
         val cancel = "Cancel"
 
         val intent = androidx.work.WorkManager.getInstance(applicationContext)

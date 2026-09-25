@@ -55,7 +55,7 @@ fun AppNavigation(
                         onNavigateToSettings = { navController.navigate("settings") },
                         onNavigateToAbout = { navController.navigate("about") },
                         onTtsMissing = { lang ->
-                            Toast.makeText(context, "Please install $lang TTS voice data.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "$lang speech isn't installed on this phone. Opening voice settings...", Toast.LENGTH_LONG).show()
                             val installIntent = Intent()
                             installIntent.action = TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA
                             installIntent.setPackage("com.google.android.tts")

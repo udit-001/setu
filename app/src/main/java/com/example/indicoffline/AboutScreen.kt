@@ -205,7 +205,7 @@ fun AboutScreen(
                     )
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "View Source Code",
+                        contentDescription = "View Privacy Policy",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
