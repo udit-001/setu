@@ -97,8 +97,8 @@ class AsrModelRepository(
 
     private fun modelUrls(lang: String): ModelUrls? = when (lang) {
         in SUPPORTED_LANGUAGES -> ModelUrls(
-            model = listOf("$REPO_LFS_BASE/$REPO_ASSETS_PATH/$lang/$MODEL_FILE"),
-            tokens = listOf("$REPO_RAW_BASE/$REPO_ASSETS_PATH/$lang/$TOKENS_FILE")
+            model = listOf("$REPO_LFS_BASE/$REPO_ASSETS_PATH/$lang/$MODEL_FILE", "$REPO_LFS_BASE_LEGACY/$REPO_ASSETS_PATH/$lang/$MODEL_FILE"),
+            tokens = listOf("$REPO_RAW_BASE/$REPO_ASSETS_PATH/$lang/$TOKENS_FILE", "$REPO_RAW_BASE_LEGACY/$REPO_ASSETS_PATH/$lang/$TOKENS_FILE")
         )
         "en" -> ModelUrls(
             model = listOf("$ENGLISH_MODEL_BASE/$MODEL_FILE"),
@@ -111,8 +111,13 @@ class AsrModelRepository(
         private const val MODEL_FILE = "model.int8.onnx"
         private const val TOKENS_FILE = "tokens.txt"
 
-        private const val REPO_LFS_BASE = "https://media.githubusercontent.com/media/Uktam-ai/uktam/main"
-        private const val REPO_RAW_BASE = "https://raw.githubusercontent.com/Uktam-ai/uktam/main"
+        // Primary source is the renamed repo; the legacy repo name is kept
+        // as a fallback mirror (GitHub redirects it, and it keeps serving
+        // until the repo is renamed).
+        private const val REPO_LFS_BASE = "https://media.githubusercontent.com/media/Uktam-ai/setu/main"
+        private const val REPO_LFS_BASE_LEGACY = "https://media.githubusercontent.com/media/Uktam-ai/uktam/main"
+        private const val REPO_RAW_BASE = "https://raw.githubusercontent.com/Uktam-ai/setu/main"
+        private const val REPO_RAW_BASE_LEGACY = "https://raw.githubusercontent.com/Uktam-ai/uktam/main"
         private const val REPO_ASSETS_PATH = "asr_assets/src/main/assets"
         private const val ENGLISH_MODEL_BASE =
             "https://huggingface.co/VocaHQ/sherpa-onnx-nemo-parakeet-tdt-ctc-110m-en-int8/resolve/main"

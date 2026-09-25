@@ -9,7 +9,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "ai.uktam"
+        applicationId = "ai.setu"
         minSdk = 34
         targetSdk = 36
         versionCode = 14

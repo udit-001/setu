@@ -83,15 +83,15 @@ fun AboutScreen(
                 modifier = Modifier.size(64.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_uktam_logo),
-                    contentDescription = "Uktam Logo",
+                    painter = painterResource(id = R.drawable.ic_setu_logo),
+                    contentDescription = "Setu Logo",
                     modifier = Modifier.fillMaxSize().scale(1.25f)
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Uktam.ai",
+                text = "Setu",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -165,7 +165,7 @@ fun AboutScreen(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .clickable { uriHandler.openUri("https://github.com/ashb155") }
+                                    .clickable { uriHandler.openUri("https://github.com/udit-001") }
                             )
                         }
                     }
@@ -178,7 +178,7 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .clickable { uriHandler.openUri("https://github.com/ashb155/uktam") }
+                    .clickable { uriHandler.openUri("https://github.com/Uktam-ai/setu") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -204,7 +204,7 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .clickable { uriHandler.openUri("https://github.com/ashb155/uktam/blob/main/LICENSE") }
+                    .clickable { uriHandler.openUri("https://github.com/Uktam-ai/setu/blob/main/LICENSE") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -230,7 +230,7 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .clickable { uriHandler.openUri("https://github.com/ashb155/uktam/blob/main/PRIVACY.md") }
+                    .clickable { uriHandler.openUri("https://github.com/Uktam-ai/setu/blob/main/PRIVACY.md") }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -260,9 +260,9 @@ fun AboutScreen(
                     Text(
                     text = buildAnnotatedString {
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("Uktam")
+                    append("Setu")
                 }
-                append(" means \"spoken\" in Sanskrit — because every Indian language deserves to be heard and understood.\nBuilt for India, by Indian AI...")
+                append(" means \"bridge\" in Sanskrit — because a language gap is just a river, and every conversation deserves to cross.\nBuilt for India, by Indian AI.")
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

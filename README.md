@@ -1,12 +1,12 @@
-# Uktam.ai
+# Setu
 
 Speak into your phone. It transcribes, translates, and speaks back — in seven languages, entirely on your device.
 
 <a href="https://play.google.com/store/apps/details?id=ai.uktam"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="72" /></a>
 
-<img width="480" alt="Uktam.ai app screenshot" src="https://github.com/user-attachments/assets/4f24f6bd-4bc7-4214-99ef-7610610f4723" />
+<img width="480" alt="Setu app screenshot" src="https://github.com/user-attachments/assets/4f24f6bd-4bc7-4214-99ef-7610610f4723" />
 
-Uktam.ai is an offline voice translator for Indian languages. Two people who don't share a language each pick their own. The app transcribes each turn, translates it, and reads it aloud. No cloud, no account, no signal needed after setup.
+Setu is an offline voice translator for Indian languages. Two people who don't share a language each pick their own. The app transcribes each turn, translates it, and reads it aloud. No cloud, no account, no signal needed after setup.
 
 ## What you get
 
@@ -28,8 +28,8 @@ You'll need Android Studio, the Android SDK (min API 34), the NDK, and CMake.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Uktam-ai/uktam.git
-   cd uktam
+   git clone https://github.com/Uktam-ai/setu.git
+   cd setu
    ```
 2. Open in Android Studio, install NDK + CMake from the SDK Manager if prompted, and run on a physical device (6GB+ RAM recommended; emulators struggle with on-device inference).
 

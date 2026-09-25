@@ -148,14 +148,14 @@ fun AsrScreen(
                             shadowElevation = 4.dp
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.ic_uktam_logo),
+                                painter = painterResource(id = R.drawable.ic_setu_logo),
                                 contentDescription = "App Logo",
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Uktam.ai",
+                            text = "Setu",
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onBackground
                         )

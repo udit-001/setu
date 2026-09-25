@@ -63,7 +63,7 @@ fun LicensesScreen(onNavigateBack: () -> Unit, onNavigateToThirdParty: () -> Uni
         ) {
             item {
                 Text(
-                    text = "Uktam.ai is powered by the following open-source technologies, custom-quantized and optimized to run smoothly on standard smartphone hardware:",
+                    text = "Setu is powered by the following open-source technologies, quantized and optimized to run smoothly on standard smartphone hardware:",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )

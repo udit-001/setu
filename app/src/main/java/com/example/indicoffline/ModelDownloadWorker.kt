@@ -55,7 +55,7 @@ class ModelDownloadWorker(
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(if (progress < 100) "$progress% completed" else "Finalizing...")
-            .setSmallIcon(R.drawable.ic_uktam_logo)
+            .setSmallIcon(R.drawable.ic_setu_logo)
             .setOngoing(true)
             .addAction(android.R.drawable.ic_delete, cancel, intent)
             .setProgress(100, progress, false)

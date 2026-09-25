@@ -58,7 +58,7 @@ fun DownloadScreen(viewModel: TranslationViewModel) {
                     modifier = Modifier.size(140.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_uktam_logo),
+                        painter = painterResource(id = R.drawable.ic_setu_logo),
                         contentDescription = "IndikVox Logo",
                         modifier = Modifier.fillMaxSize().scale(1.25f)
                     )
