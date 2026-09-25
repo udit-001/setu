@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -291,34 +292,55 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun speak(text: String, targetLangCode: String, onTtsMissing: (String) -> Unit) {
         if (!isTtsReady || tts == null) return
-        val locale = when (targetLangCode) {
-            "en" -> Locale.Builder().setLanguage("en").setRegion("US").build()
-            "hi" -> Locale.Builder().setLanguage("hi").setRegion("IN").build()
-            "kn" -> Locale.Builder().setLanguage("kn").setRegion("IN").build()
-            "ta" -> Locale.Builder().setLanguage("ta").setRegion("IN").build()
-            "te" -> Locale.Builder().setLanguage("te").setRegion("IN").build()
-            "mr" -> Locale.Builder().setLanguage("mr").setRegion("IN").build()
-            "ml" -> Locale.Builder().setLanguage("ml").setRegion("IN").build()
-            else -> Locale.Builder().setLanguage("hi").setRegion("IN").build()
+        val engine = tts ?: return
+        val lang = if (availableLanguages.contains(targetLangCode)) targetLangCode else "hi"
+
+        // Android TTS packs are country-scoped (en-US, en-IN, ta-IN, ...); there
+        // is no bare-language pack, and each country pack has its own install
+        // state. Never sample an arbitrary voice for the language: pick the best
+        // *installed* voice, preferring a region match, then an offline-capable
+        // voice (this app must work with no signal).
+        val preferredRegions = if (lang == "en") listOf("US", "IN", "GB", "AU") else listOf("IN")
+        val installedVoices = engine.voices.orEmpty().filter {
+            it.locale.language == lang &&
+                it.features?.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) != true
         }
-        val result = tts?.setLanguage(locale)
-        android.util.Log.d("TtsDebug", "setLanguage result for ${locale.language}: $result")
+        val voice: Voice? = installedVoices.firstOrNull { v ->
+            !v.isNetworkConnectionRequired && v.locale.country.uppercase() in preferredRegions
+        } ?: installedVoices.firstOrNull { !it.isNetworkConnectionRequired }
+            ?: installedVoices.firstOrNull()
 
-        val voice = tts?.voices?.find { it.locale.language == locale.language }
-        val isNotInstalled = voice?.features?.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) == true
-
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED || isNotInstalled) {
-            android.util.Log.d("TtsDebug", "TTS missing data or not supported")
-            viewModelScope.launch(Dispatchers.Main) {
-                val nativeName = getLanguageName(targetLangCode)
-                val englishName = getLanguageNameEnglish(targetLangCode)
-                onTtsMissing("$englishName ($nativeName)")
+        if (voice != null) {
+            engine.setVoice(voice)
+            android.util.Log.d("TtsDebug", "Using TTS voice '${voice.name}' (${voice.locale})")
+        } else {
+            // No installed voice reported: probe setLanguage across regions
+            // before giving up (some engines don't populate getVoices()).
+            val anyAvailable = preferredRegions.any { region ->
+                val locale = Locale.Builder().setLanguage(lang).setRegion(region).build()
+                val result = engine.setLanguage(locale)
+                android.util.Log.d("TtsDebug", "setLanguage($locale) -> $result")
+                result == TextToSpeech.LANG_AVAILABLE ||
+                    result == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
+                    result == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE
             }
-            return
+            if (!anyAvailable) {
+                android.util.Log.d("TtsDebug", "No installed TTS voice for '$lang'")
+                reportMissingVoice(targetLangCode, onTtsMissing)
+                return
+            }
         }
 
-        tts?.setSpeechRate(_ttsSpeechSpeed.value)
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        engine.setSpeechRate(_ttsSpeechSpeed.value)
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
+    private fun reportMissingVoice(targetLangCode: String, onTtsMissing: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val englishName = getLanguageNameEnglish(targetLangCode)
+            val nativeName = getLanguageName(targetLangCode)
+            onTtsMissing(if (englishName == nativeName) englishName else "$englishName ($nativeName)")
+        }
     }
 
     private suspend fun translate(text: String, srcLang: String, targetLang: String): String {
