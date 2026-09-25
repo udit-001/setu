@@ -33,6 +33,3 @@ First launch downloads the translation model (1–2.5GB). Speech models download
 
 Issues and feature requests are welcome. If you're planning something big — like adding support for a new Indic language — open an issue first so we can talk through it.
 
-## License
-
-[GPL-3.0](LICENSE)
