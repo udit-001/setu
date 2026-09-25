@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -35,6 +37,23 @@ android {
         }
     }
 
+
+    signingConfigs {
+        create("release") {
+            // CI release signing: secrets injected as environment variables.
+            // Local builds without the env vars fall back to the debug keystore.
+            val keystoreB64 = System.getenv("RELEASE_KEYSTORE_B64")
+            if (keystoreB64 != null && keystoreB64.isNotBlank()) {
+                val ksFile = File("/tmp/setu-release.keystore")
+                Base64.getDecoder().decode(keystoreB64).let { ksFile.writeBytes(it) }
+                storeFile = ksFile
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -46,7 +65,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (System.getenv("RELEASE_KEYSTORE_B64") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
